@@ -1,8 +1,8 @@
-# Tribute
+# Tribute.js NG
 
-[![CDNJS version](https://img.shields.io/cdnjs/v/tributejs.svg)](https://cdnjs.com/libraries/tributejs) [![Build Status](https://travis-ci.org/zurb/tribute.svg?branch=master)](https://travis-ci.org/zurb/tribute)
+[![CI](https://github.com/valentinstn/tributejs-ng/actions/workflows/ci.yml/badge.svg)](https://github.com/valentinstn/tributejs-ng/actions/workflows/ci.yml) [![npm version](https://img.shields.io/npm/v/tributejs-ng.svg)](https://www.npmjs.com/package/tributejs-ng)
 
-A cross-browser `@mention` engine written in ES6, no dependencies. Tested in Firefox, Chrome, iOS Safari, Safari, IE 9+, Edge 12+, Android 4+, and Windows Phone.
+A maintained fork of Tribute, the cross-browser `@mention` engine written in ES6 with no runtime dependencies.
 
 - [Installing](#installing)
 - [Initializing](#initializing)
@@ -15,14 +15,14 @@ A cross-browser `@mention` engine written in ES6, no dependencies. Tested in Fir
 
 ## Installing
 
-There are a few ways to install Tribute; [Bower](http://bower.io/), as an [NPM Module](https://npmjs.com/package/tributejs), or by [downloading](https://github.com/zurb/tribute/archive/master.zip) from the `dist` folder in this repo.
+Install Tribute.js NG as an [npm module](https://npmjs.com/package/tributejs-ng), or [download](https://github.com/valentinstn/tributejs-ng/archive/master.zip) the bundles from the `dist` folder in this repository.
 
 ### NPM Module
 
 You can install Tribute by running:
 
 ```shell
-npm install tributejs
+npm install tributejs-ng
 ```
 
 Or by adding Tribute to your `package.json` file.
@@ -30,7 +30,7 @@ Or by adding Tribute to your `package.json` file.
 Import into your ES6 code.
 
 ```js
-import Tribute from "tributejs";
+import Tribute from "tributejs-ng";
 ```
 
 ### Ruby Gem
@@ -61,16 +61,16 @@ After installing, you need to update your Babel module loader to not exclude Tri
 {
     test: /\.js$/,
     loader: 'babel',
-    exclude: /node_modules\/(?!tributejs)/
+    exclude: /node_modules\/(?!tributejs-ng)/
 }
 ```
 
 ### Download or Clone
 
-Or you can [download the repo](https://github.com/zurb/tribute/archive/master.zip) or clone it localy with this command:
+Or you can [download the repository](https://github.com/valentinstn/tributejs-ng/archive/master.zip) or clone it with this command:
 
 ```shell
-git clone git@github.com:zurb/tribute.git
+git clone git@github.com:valentinstn/tributejs-ng.git
 ```
 
 You can then copy the files in the `dist` directory to your project.

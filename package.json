@@ -1,11 +1,25 @@
 {
-  "name": "tributejs",
+  "name": "tributejs-ng",
   "version": "5.2.0",
-  "description": "Native ES6 @mentions",
+  "description": "Maintained cross-browser @mention and autocomplete engine",
   "main": "dist/tribute.js",
   "module": "dist/tribute.esm.js",
   "browser": "dist/tribute.min.js",
   "types": "tributejs.d.ts",
+  "files": [
+    "dist",
+    "tribute.css",
+    "tributejs.d.ts"
+  ],
+  "engines": {
+    "node": "^22.14.0 || ^24.0.0"
+  },
+  "packageManager": "yarn@1.22.22",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true,
+    "registry": "https://registry.npmjs.org/"
+  },
   "devDependencies": {
     "@babel/core": "^7.5.5",
     "@babel/preset-env": "^7.5.5",
@@ -35,7 +49,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/zurb/tribute.git"
+    "url": "git+https://github.com/valentinstn/tributejs-ng.git"
   },
   "scripts": {
     "build": "rollup -c",
