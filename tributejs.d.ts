@@ -75,7 +75,7 @@ export type TributeCollection<T extends {}> = {
   menuShowMinLength?: number;
 };
 
-export type TributeOptions<T> =
+export type TributeOptions<T extends {}> =
   | TributeCollection<T>
   | {
       // pass an array of config objects
