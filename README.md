@@ -499,8 +499,6 @@ Ember – [ember-tribute](https://github.com/MalayaliRobz/ember-tribute) by **Ma
 
 - Froala Editor - https://www.froala.com/wysiwyg-editor/examples/tribute-js
 
-## Brought to you by
+## Credits and History
 
-[ZURB](https://zurb.com), the creators of [Helio](https://helio.app)
-
-Design successful products by rapidly revealing key user behaviors. [Helio](https://helio.app) makes it easy to get reactions on your designs quickly so your team can focus on solving the right problems, right now.
+The original author of `tributejs` was [ZURB](https://zurb.com). As `tributejs` was unmaintained for a very long time, I dediced to [fork it and release it as `tributejs-ng`](https://github.com/zurb/tribute/issues/912).
