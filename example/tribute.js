@@ -83,33 +83,50 @@
   }
 
   if (!Array.prototype.find) {
-    Array.prototype.find = function (predicate) {
-      if (this === null) {
-        throw new TypeError('Array.prototype.find called on null or undefined');
-      }
-
-      if (typeof predicate !== 'function') {
-        throw new TypeError('predicate must be a function');
-      }
-
-      var list = Object(this);
-      var length = list.length >>> 0;
-      var thisArg = arguments[1];
-      var value;
-
-      for (var i = 0; i < length; i++) {
-        value = list[i];
-
-        if (predicate.call(thisArg, value, i, list)) {
-          return value;
+    Object.defineProperty(Array.prototype, 'find', {
+      value: function value(predicate) {
+        // 1. Let O be ? ToObject(this value).
+        if (this == null) {
+          throw TypeError('"this" is null or not defined');
         }
-      }
 
-      return undefined;
-    };
+        var o = Object(this); // 2. Let len be ? ToLength(? Get(O, "length")).
+
+        var len = o.length >>> 0; // 3. If IsCallable(predicate) is false, throw a TypeError exception.
+
+        if (typeof predicate !== 'function') {
+          throw TypeError('predicate must be a function');
+        } // 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+
+
+        var thisArg = arguments[1]; // 5. Let k be 0.
+
+        var k = 0; // 6. Repeat, while k < len
+
+        while (k < len) {
+          // a. Let Pk be ! ToString(k).
+          // b. Let kValue be ? Get(O, Pk).
+          // c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+          // d. If testResult is true, return kValue.
+          var kValue = o[k];
+
+          if (predicate.call(thisArg, kValue, k, o)) {
+            return kValue;
+          } // e. Increase k by 1.
+
+
+          k++;
+        } // 7. Return undefined.
+
+
+        return undefined;
+      },
+      configurable: true,
+      writable: true
+    });
   }
 
-  if (window && typeof window.CustomEvent !== "function") {
+  if (typeof window !== 'undefined' && typeof window.CustomEvent !== "function") {
     var CustomEvent$1 = function CustomEvent(event, params) {
       params = params || {
         bubbles: false,
@@ -142,16 +159,16 @@
         element.boundKeydown = this.keydown.bind(element, this);
         element.boundKeyup = this.keyup.bind(element, this);
         element.boundInput = this.input.bind(element, this);
-        element.addEventListener("keydown", element.boundKeydown, false);
-        element.addEventListener("keyup", element.boundKeyup, false);
-        element.addEventListener("input", element.boundInput, false);
+        element.addEventListener("keydown", element.boundKeydown, true);
+        element.addEventListener("keyup", element.boundKeyup, true);
+        element.addEventListener("input", element.boundInput, true);
       }
     }, {
       key: "unbind",
       value: function unbind(element) {
-        element.removeEventListener("keydown", element.boundKeydown, false);
-        element.removeEventListener("keyup", element.boundKeyup, false);
-        element.removeEventListener("input", element.boundInput, false);
+        element.removeEventListener("keydown", element.boundKeydown, true);
+        element.removeEventListener("keyup", element.boundKeyup, true);
+        element.removeEventListener("input", element.boundInput, true);
         delete element.boundKeydown;
         delete element.boundKeyup;
         delete element.boundInput;
@@ -214,7 +231,7 @@
         }
 
         instance.updateSelection(this);
-        if (event.keyCode === 27) return;
+        if (!event.keyCode || event.keyCode === 27) return;
 
         if (!instance.tribute.allowSpaces && instance.tribute.hasTrailingSpace) {
           instance.tribute.hasTrailingSpace = false;
@@ -483,14 +500,14 @@
         this.menuClickEvent = this.tribute.events.click.bind(null, this);
         this.menuContainerScrollEvent = this.debounce(function () {
           if (_this.tribute.isActive) {
-            _this.tribute.showMenuFor(_this.tribute.current.element, false);
+            _this.tribute.hideMenu();
           }
-        }, 300, false);
+        }, 10, false);
         this.windowResizeEvent = this.debounce(function () {
           if (_this.tribute.isActive) {
-            _this.tribute.range.positionMenuAtCaret(true);
+            _this.tribute.hideMenu();
           }
-        }, 300, false); // fixes IE11 issues with mousedown
+        }, 10, false); // fixes IE11 issues with mousedown
 
         this.tribute.range.getDocument().addEventListener("MSPointerDown", this.menuClickEvent, false);
         this.tribute.range.getDocument().addEventListener("mousedown", this.menuClickEvent, false);
@@ -568,8 +585,6 @@
     }, {
       key: "positionMenuAtCaret",
       value: function positionMenuAtCaret(scrollTo) {
-        var _this = this;
-
         var context = this.tribute.current,
             coordinates;
         var info = this.getTriggerInfo(false, this.tribute.hasTrailingSpace, true, this.tribute.allowSpaces, this.tribute.autocompleteMode);
@@ -586,7 +601,7 @@
             coordinates = this.getContentEditableCaretPosition(info.mentionPosition);
           }
 
-          this.tribute.menu.style.cssText = "top: ".concat(coordinates.top, "px;\n                                     left: ").concat(coordinates.left, "px;\n                                     right: ").concat(coordinates.right, "px;\n                                     bottom: ").concat(coordinates.bottom, "px;\n                                     position: absolute;\n                                     display: block;");
+          this.tribute.menu.style.cssText = "top: ".concat(coordinates.top, "px;\n                                     left: ").concat(coordinates.left, "px;\n                                     right: ").concat(coordinates.right, "px;\n                                     bottom: ").concat(coordinates.bottom, "px;\n                                     max-height: ").concat(coordinates.maxHeight || 500, "px;\n                                     max-width: ").concat(coordinates.maxWidth || 300, "px;\n                                     position: ").concat(coordinates.position || 'absolute', ";\n                                     display: block;");
 
           if (coordinates.left === 'auto') {
             this.tribute.menu.style.left = 'auto';
@@ -597,23 +612,6 @@
           }
 
           if (scrollTo) this.scrollIntoView();
-          window.setTimeout(function () {
-            var menuDimensions = {
-              width: _this.tribute.menu.offsetWidth,
-              height: _this.tribute.menu.offsetHeight
-            };
-
-            var menuIsOffScreen = _this.isMenuOffScreen(coordinates, menuDimensions);
-
-            var menuIsOffScreenHorizontally = window.innerWidth > menuDimensions.width && (menuIsOffScreen.left || menuIsOffScreen.right);
-            var menuIsOffScreenVertically = window.innerHeight > menuDimensions.height && (menuIsOffScreen.top || menuIsOffScreen.bottom);
-
-            if (menuIsOffScreenHorizontally || menuIsOffScreenVertically) {
-              _this.tribute.menu.style.cssText = 'display: none';
-
-              _this.positionMenuAtCaret(scrollTo);
-            }
-          }, 0);
         } else {
           this.tribute.menu.style.cssText = 'display: none';
         }
@@ -677,7 +675,7 @@
             var textSuffix = typeof this.tribute.replaceTextSuffix == 'string' ? this.tribute.replaceTextSuffix : ' ';
             text += textSuffix;
             var startPos = info.mentionPosition;
-            var endPos = info.mentionPosition + info.mentionText.length + textSuffix.length;
+            var endPos = info.mentionPosition + info.mentionText.length + (textSuffix === '' ? 1 : textSuffix.length);
 
             if (!this.tribute.autocompleteMode) {
               endPos += info.mentionTriggerChar.length - 1;
@@ -826,8 +824,6 @@
     }, {
       key: "getLastWordInText",
       value: function getLastWordInText(text) {
-        text = text.replace(/\u00A0/g, ' '); // https://stackoverflow.com/questions/29850407/how-do-i-replace-unicode-character-u00a0-with-a-space-in-javascript
-
         var wordsArray;
 
         if (this.tribute.autocompleteSeparator) {
@@ -836,13 +832,13 @@
           wordsArray = text.split(/\s+/);
         }
 
-        var worldsCount = wordsArray.length - 1;
-        return wordsArray[worldsCount].trim();
+        var wordsCount = wordsArray.length - 1;
+        return wordsArray[wordsCount];
       }
     }, {
       key: "getTriggerInfo",
       value: function getTriggerInfo(menuAlreadyActive, hasTrailingSpace, requireLeadingSpace, allowSpaces, isAutocomplete) {
-        var _this2 = this;
+        var _this = this;
 
         var ctx = this.tribute.current;
         var selected, path, offset;
@@ -877,7 +873,7 @@
           var triggerChar;
           this.tribute.collection.forEach(function (config) {
             var c = config.trigger;
-            var idx = config.requireLeadingSpace ? _this2.lastIndexWithLeadingSpace(effectiveRange, c) : effectiveRange.lastIndexOf(c);
+            var idx = config.requireLeadingSpace ? _this.lastIndexWithLeadingSpace(effectiveRange, c) : effectiveRange.lastIndexOf(c);
 
             if (idx > mostRecentTriggerCharPos) {
               mostRecentTriggerCharPos = idx;
@@ -886,7 +882,7 @@
             }
           });
 
-          if (mostRecentTriggerCharPos >= 0 && (mostRecentTriggerCharPos === 0 || !requireLeadingSpace || /[\xA0\s]/g.test(effectiveRange.substring(mostRecentTriggerCharPos - 1, mostRecentTriggerCharPos)))) {
+          if (mostRecentTriggerCharPos >= 0 && (mostRecentTriggerCharPos === 0 || !requireLeadingSpace || /\s/.test(effectiveRange.substring(mostRecentTriggerCharPos - 1, mostRecentTriggerCharPos)))) {
             var currentTriggerSnippet = effectiveRange.substring(mostRecentTriggerCharPos + triggerChar.length, effectiveRange.length);
             triggerChar = effectiveRange.substring(mostRecentTriggerCharPos, mostRecentTriggerCharPos + triggerChar.length);
             var firstSnippetChar = currentTriggerSnippet.substring(0, 1);
@@ -972,7 +968,7 @@
           width: null,
           height: null
         };
-        this.tribute.menu.style.cssText = "top: 0px;\n                                 left: 0px;\n                                 position: fixed;\n                                 display: block;\n                                 visibility; hidden;";
+        this.tribute.menu.style.cssText = "top: 0px;\n                                 left: 0px;\n                                 position: fixed;\n                                 display: block;\n                                 visibility; hidden;\n                                 max-height:500px;";
         dimensions.width = this.tribute.menu.offsetWidth;
         dimensions.height = this.tribute.menu.offsetHeight;
         this.tribute.menu.style.cssText = "display: none;";
@@ -981,8 +977,7 @@
     }, {
       key: "getTextAreaOrInputUnderlinePosition",
       value: function getTextAreaOrInputUnderlinePosition(element, position, flipped) {
-        var properties = ['direction', 'boxSizing', 'width', 'height', 'overflowX', 'overflowY', 'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch', 'fontSize', 'fontSizeAdjust', 'lineHeight', 'fontFamily', 'textAlign', 'textTransform', 'textIndent', 'textDecoration', 'letterSpacing', 'wordSpacing'];
-        var isFirefox = window.mozInnerScreenX !== null;
+        var properties = ['direction', 'boxSizing', 'width', 'height', 'overflowX', 'overflowY', 'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderStyle', 'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'fontStyle', 'fontVariant', 'fontWeight', 'fontStretch', 'fontSize', 'fontSizeAdjust', 'lineHeight', 'fontFamily', 'textAlign', 'textTransform', 'textIndent', 'textDecoration', 'letterSpacing', 'wordSpacing'];
         var div = this.getDocument().createElement('div');
         div.id = 'input-textarea-caret-position-mirror-div';
         this.getDocument().body.appendChild(div);
@@ -992,81 +987,52 @@
 
         if (element.nodeName !== 'INPUT') {
           style.wordWrap = 'break-word';
-        } // position off-screen
-
+        }
 
         style.position = 'absolute';
         style.visibility = 'hidden'; // transfer the element's properties to the div
 
         properties.forEach(function (prop) {
           style[prop] = computed[prop];
-        });
+        }); //NOT SURE WHY THIS IS HERE AND IT DOESNT SEEM HELPFUL
+        // if (isFirefox) {
+        //     style.width = `${(parseInt(computed.width) - 2)}px`
+        //     if (element.scrollHeight > parseInt(computed.height))
+        //         style.overflowY = 'scroll'
+        // } else {
+        //     style.overflow = 'hidden'
+        // }
 
-        if (isFirefox) {
-          style.width = "".concat(parseInt(computed.width) - 2, "px");
-          if (element.scrollHeight > parseInt(computed.height)) style.overflowY = 'scroll';
-        } else {
-          style.overflow = 'hidden';
-        }
-
-        div.textContent = element.value.substring(0, position);
+        var span0 = document.createElement('span');
+        span0.textContent = element.value.substring(0, position);
+        div.appendChild(span0);
 
         if (element.nodeName === 'INPUT') {
           div.textContent = div.textContent.replace(/\s/g, ' ');
-        }
+        } //Create a span in the div that represents where the cursor
+        //should be
 
-        var span = this.getDocument().createElement('span');
-        span.textContent = element.value.substring(position) || '.';
+
+        var span = this.getDocument().createElement('span'); //we give it no content as this represents the cursor
+
+        span.textContent = '&#x200B;';
         div.appendChild(span);
-        var rect = element.getBoundingClientRect();
-        var doc = document.documentElement;
-        var windowLeft = (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0);
-        var windowTop = (window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0);
-        var top = 0;
-        var left = 0;
+        var span2 = this.getDocument().createElement('span');
+        span2.textContent = element.value.substring(position);
+        div.appendChild(span2);
+        var rect = element.getBoundingClientRect(); //position the div exactly over the element
+        //so we can get the bounding client rect for the span and
+        //it should represent exactly where the cursor is
 
-        if (this.menuContainerIsBody) {
-          top = rect.top;
-          left = rect.left;
-        }
-
-        var coordinates = {
-          top: top + windowTop + span.offsetTop + parseInt(computed.borderTopWidth) + parseInt(computed.fontSize) - element.scrollTop,
-          left: left + windowLeft + span.offsetLeft + parseInt(computed.borderLeftWidth)
-        };
-        var windowWidth = window.innerWidth;
-        var windowHeight = window.innerHeight;
-        var menuDimensions = this.getMenuDimensions();
-        var menuIsOffScreen = this.isMenuOffScreen(coordinates, menuDimensions);
-
-        if (menuIsOffScreen.right) {
-          coordinates.right = windowWidth - coordinates.left;
-          coordinates.left = 'auto';
-        }
-
-        var parentHeight = this.tribute.menuContainer ? this.tribute.menuContainer.offsetHeight : this.getDocument().body.offsetHeight;
-
-        if (menuIsOffScreen.bottom) {
-          var parentRect = this.tribute.menuContainer ? this.tribute.menuContainer.getBoundingClientRect() : this.getDocument().body.getBoundingClientRect();
-          var scrollStillAvailable = parentHeight - (windowHeight - parentRect.top);
-          coordinates.bottom = scrollStillAvailable + (windowHeight - rect.top - span.offsetTop);
-          coordinates.top = 'auto';
-        }
-
-        menuIsOffScreen = this.isMenuOffScreen(coordinates, menuDimensions);
-
-        if (menuIsOffScreen.left) {
-          coordinates.left = windowWidth > menuDimensions.width ? windowLeft + windowWidth - menuDimensions.width : windowLeft;
-          delete coordinates.right;
-        }
-
-        if (menuIsOffScreen.top) {
-          coordinates.top = windowHeight > menuDimensions.height ? windowTop + windowHeight - menuDimensions.height : windowTop;
-          delete coordinates.bottom;
-        }
-
+        div.style.position = 'fixed';
+        div.style.left = rect.left + 'px';
+        div.style.top = rect.top + 'px';
+        div.style.width = rect.width + 'px';
+        div.style.height = rect.height + 'px';
+        div.scrollTop = element.scrollTop;
+        var spanRect = span.getBoundingClientRect();
         this.getDocument().body.removeChild(div);
-        return coordinates;
+        return this.getFixedCoordinatesRelativeToRect(spanRect);
       }
     }, {
       key: "getContentEditableCaretPosition",
@@ -1074,61 +1040,62 @@
         var range;
         var sel = this.getWindowSelection();
         range = this.getDocument().createRange(); // setStart/setEnd are inconsistently working in Firefox/Chrome if
-        // the selectedNodePosition is 0. In that case, the selectNodeContents works well
+        // the selectedNodePosition is 0. In that case, selectNodeContents works well.
 
         if (selectedNodePosition > 0) {
           range.setStart(sel.anchorNode, selectedNodePosition);
           range.setEnd(sel.anchorNode, selectedNodePosition);
         } else {
           range.selectNodeContents(sel.anchorNode);
-        } // collapse range after rect was retrieved
-
+        }
 
         var rect = range.getBoundingClientRect();
         range.collapse(false);
-        var doc = document.documentElement;
-        var windowLeft = (window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0);
-        var windowTop = (window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0);
-        var left = rect.left;
-        var top = rect.top;
+        return this.getFixedCoordinatesRelativeToRect(rect);
+      }
+    }, {
+      key: "getFixedCoordinatesRelativeToRect",
+      value: function getFixedCoordinatesRelativeToRect(rect) {
         var coordinates = {
-          left: left + windowLeft,
-          top: top + rect.height + windowTop
+          position: 'fixed',
+          left: rect.left,
+          top: rect.top + rect.height
         };
-        var windowWidth = window.innerWidth;
-        var windowHeight = window.innerHeight;
         var menuDimensions = this.getMenuDimensions();
-        var menuIsOffScreen = this.isMenuOffScreen(coordinates, menuDimensions);
+        var availableSpaceOnTop = rect.top;
+        var availableSpaceOnBottom = window.innerHeight - (rect.top + rect.height); //check to see where's the right place to put the menu vertically
 
-        if (menuIsOffScreen.right) {
-          coordinates.left = 'auto';
-          coordinates.right = windowWidth - rect.left - windowLeft;
+        if (availableSpaceOnBottom < menuDimensions.height) {
+          if (availableSpaceOnTop >= menuDimensions.height || availableSpaceOnTop > availableSpaceOnBottom) {
+            coordinates.top = 'auto';
+            coordinates.bottom = window.innerHeight - rect.top;
+
+            if (availableSpaceOnBottom < menuDimensions.height) {
+              coordinates.maxHeight = availableSpaceOnTop;
+            }
+          } else {
+            if (availableSpaceOnTop < menuDimensions.height) {
+              coordinates.maxHeight = availableSpaceOnBottom;
+            }
+          }
         }
 
-        var parentHeight = this.tribute.menuContainer ? this.tribute.menuContainer.offsetHeight : this.getDocument().body.offsetHeight;
+        var availableSpaceOnLeft = rect.left;
+        var availableSpaceOnRight = window.innerWidth - rect.left; //check to see where's the right place to put the menu horizontally
 
-        if (menuIsOffScreen.bottom) {
-          var parentRect = this.tribute.menuContainer ? this.tribute.menuContainer.getBoundingClientRect() : this.getDocument().body.getBoundingClientRect();
-          var scrollStillAvailable = parentHeight - (windowHeight - parentRect.top);
-          coordinates.top = 'auto';
-          coordinates.bottom = scrollStillAvailable + (windowHeight - rect.top);
-        }
+        if (availableSpaceOnRight < menuDimensions.width) {
+          if (availableSpaceOnLeft >= menuDimensions.width || availableSpaceOnLeft > availableSpaceOnRight) {
+            coordinates.left = 'auto';
+            coordinates.right = window.innerWidth - rect.left;
 
-        menuIsOffScreen = this.isMenuOffScreen(coordinates, menuDimensions);
-
-        if (menuIsOffScreen.left) {
-          coordinates.left = windowWidth > menuDimensions.width ? windowLeft + windowWidth - menuDimensions.width : windowLeft;
-          delete coordinates.right;
-        }
-
-        if (menuIsOffScreen.top) {
-          coordinates.top = windowHeight > menuDimensions.height ? windowTop + windowHeight - menuDimensions.height : windowTop;
-          delete coordinates.bottom;
-        }
-
-        if (!this.menuContainerIsBody) {
-          coordinates.left = coordinates.left ? coordinates.left - this.tribute.menuContainer.offsetLeft : coordinates.left;
-          coordinates.top = coordinates.top ? coordinates.top - this.tribute.menuContainer.offsetTop : coordinates.top;
+            if (availableSpaceOnRight < menuDimensions.width) {
+              coordinates.maxWidth = availableSpaceOnLeft;
+            }
+          } else {
+            if (availableSpaceOnLeft < menuDimensions.width) {
+              coordinates.maxWidth = availableSpaceOnRight;
+            }
+          }
         }
 
         return coordinates;
@@ -1353,6 +1320,8 @@
 
       var _ref$values = _ref.values,
           values = _ref$values === void 0 ? null : _ref$values,
+          _ref$loadingItemTempl = _ref.loadingItemTemplate,
+          loadingItemTemplate = _ref$loadingItemTempl === void 0 ? null : _ref$loadingItemTempl,
           _ref$iframe = _ref.iframe,
           iframe = _ref$iframe === void 0 ? null : _ref$iframe,
           _ref$selectClass = _ref.selectClass,
@@ -1455,6 +1424,8 @@
           fillAttr: fillAttr,
           // array of objects or a function returning an array of objects
           values: values,
+          // useful for when values is an async function
+          loadingItemTemplate: loadingItemTemplate,
           requireLeadingSpace: requireLeadingSpace,
           searchOpts: searchOpts,
           menuItemLimit: menuItemLimit,
@@ -1489,6 +1460,7 @@
             lookup: item.lookup || lookup,
             fillAttr: item.fillAttr || fillAttr,
             values: item.values,
+            loadingItemTemplate: item.loadingItemTemplate,
             requireLeadingSpace: item.requireLeadingSpace,
             searchOpts: item.searchOpts || searchOpts,
             menuItemLimit: item.menuItemLimit || menuItemLimit,
@@ -1550,10 +1522,8 @@
       key: "ensureEditable",
       value: function ensureEditable(element) {
         if (Tribute.inputTypes().indexOf(element.nodeName) === -1) {
-          if (element.contentEditable) {
-            element.contentEditable = true;
-          } else {
-            throw new Error("[Tribute] Cannot bind to " + element.nodeName);
+          if (!element.contentEditable) {
+            throw new Error("[Tribute] Cannot bind to " + element.nodeName + ", not contentEditable");
           }
         }
       }
@@ -1625,8 +1595,6 @@
 
           var ul = _this2.menu.querySelector("ul");
 
-          _this2.range.positionMenuAtCaret(scrollTo);
-
           if (!items.length) {
             var noMatchEvent = new CustomEvent("tribute-no-match", {
               detail: _this2.menu
@@ -1638,6 +1606,8 @@
               _this2.hideMenu();
             } else {
               typeof _this2.current.collection.noMatchTemplate === "function" ? ul.innerHTML = _this2.current.collection.noMatchTemplate() : ul.innerHTML = _this2.current.collection.noMatchTemplate;
+
+              _this2.range.positionMenuAtCaret(scrollTo);
             }
 
             return;
@@ -1671,9 +1641,16 @@
             fragment.appendChild(li);
           });
           ul.appendChild(fragment);
+
+          _this2.range.positionMenuAtCaret(scrollTo);
         };
 
         if (typeof this.current.collection.values === "function") {
+          if (this.current.collection.loadingItemTemplate) {
+            this.menu.querySelector("ul").innerHTML = this.current.collection.loadingItemTemplate;
+            this.range.positionMenuAtCaret(scrollTo);
+          }
+
           this.current.collection.values(this.current.mentionText, processValues);
         } else {
           processValues(this.current.collection.values);
