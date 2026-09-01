@@ -37,3 +37,13 @@ The major focus that we could use your help with is creating wrappers for differ
 
 - Prosemirror component
 - `noMatchTemplate` per collection.
+
+## Release Procedure
+
+1. Confirm the intended changes with `git diff` and `git diff --check`.
+2. Update the version in `package.json`.
+3. Run the build and unit tests, then verify generated bundles are committed.
+4. Commit the source, declarations, tests, documentation, and generated outputs together.
+5. Push `master` and create/push the matching annotated tag `v<version>`.
+6. Let `.github/workflows/publish.yml` publish through npm Trusted Publishing. Do not manually publish a release that the workflow has accepted.
+7. Verify the GitHub Actions run, npm `latest` dist-tag, published version, and package contents.

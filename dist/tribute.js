@@ -833,7 +833,7 @@
         }
 
         var wordsCount = wordsArray.length - 1;
-        return wordsArray[wordsCount];
+        return wordsArray[wordsCount].trim();
       }
     }, {
       key: "getTriggerInfo",

@@ -207,6 +207,28 @@ describe("Tribute autocomplete mode cases", function() {
 
       detachTribute(tribute, input.id);
     });
+
+    it(`when autocomplete entry is preceded by whitespace. For : ${elementType}`, () => {
+      let input = createDomElement(elementType);
+
+      let collectionObject = {
+        autocompleteMode: true,
+        autocompleteSeparator: new RegExp(/\-|\+|\*|\(|\)|\//),
+        values: [
+          { key: 'Jordan Humphreys', value: 'Jordan Humphreys' },
+          { key: 'Sir Walter Riley', value: 'Sir Walter Riley' }
+        ]
+      };
+
+      let tribute = attachTribute(collectionObject, input.id);
+
+      fillIn(input, '(   J');
+      const popupList = document.querySelectorAll('.tribute-container > ul > li');
+      expect(popupList.length).toBe(1);
+      expect(tribute.current.mentionText).toBe('J');
+
+      detachTribute(tribute, input.id);
+    });
   });
 
   ["text", "contenteditable"].forEach(elementType => {

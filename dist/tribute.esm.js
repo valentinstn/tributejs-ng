@@ -764,7 +764,7 @@ class TributeRange {
             wordsArray = text.split(/\s+/);
         }
         var wordsCount = wordsArray.length - 1;
-        return wordsArray[wordsCount];
+        return wordsArray[wordsCount].trim();
     }
 
     getTriggerInfo(menuAlreadyActive, hasTrailingSpace, requireLeadingSpace, allowSpaces, isAutocomplete) {
