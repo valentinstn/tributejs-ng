@@ -7,6 +7,9 @@ export const createDomElement = function(element = 'text') {
   wrapperDiv.id = 'tribute-wrapper-div';
   let input = document.createElement(elementToCreate);
   input.id = `tribute-${element}`;
+  if (element === 'contenteditable') {
+    input.contentEditable = true;
+  }
   wrapperDiv.appendChild(input);
   document.body.appendChild(wrapperDiv);
   return input;
@@ -26,8 +29,34 @@ export const clearDom = function() {
 export const fillIn = function(input, text) {
   input.focus();
   $(input).sendkeys(text);
-  input.dispatchEvent(new KeyboardEvent('keydown'));
-  input.dispatchEvent(new KeyboardEvent('keyup'));
+  if (input.nodeName !== 'INPUT' && input.nodeName !== 'TEXTAREA') {
+    const range = document.createRange();
+    let caretNode = input;
+    while (caretNode.lastChild) {
+      caretNode = caretNode.lastChild;
+    }
+    if (caretNode.nodeType === Node.TEXT_NODE) {
+      range.setStart(caretNode, caretNode.length);
+    } else {
+      range.selectNodeContents(input);
+      range.collapse(false);
+    }
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+  const finalCharacter = text.slice(-1);
+  const keyCode = finalCharacter === '('
+    ? 57
+    : finalCharacter.charCodeAt(0) || 0;
+  const keydown = new KeyboardEvent('keydown', { bubbles: true });
+  const keyup = new KeyboardEvent('keyup', { bubbles: true });
+  Object.defineProperty(keydown, 'keyCode', { value: keyCode });
+  Object.defineProperty(keydown, 'which', { value: keyCode });
+  Object.defineProperty(keyup, 'keyCode', { value: keyCode });
+  Object.defineProperty(keyup, 'which', { value: keyCode });
+  input.dispatchEvent(keydown);
+  input.dispatchEvent(keyup);
 }
 
 export const simulateMouseClick = function(targetNode) {
