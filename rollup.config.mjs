@@ -1,11 +1,12 @@
+// Rollup's configuration is an ES module.
 import resolve from "@rollup/plugin-node-resolve";
 import commonjs from "@rollup/plugin-commonjs";
-import babel from "rollup-plugin-babel";
-import { terser } from "rollup-plugin-terser";
+import babel from "@rollup/plugin-babel";
+import terser from "@rollup/plugin-terser";
 import sass from "rollup-plugin-sass";
 import serve from "rollup-plugin-serve";
 import livereload from "rollup-plugin-livereload";
-import pkg from "./package.json";
+import pkg from "./package.json" with { type: "json" };
 import { writeFileSync } from "fs";
 
 const production = !process.env.ROLLUP_WATCH;
@@ -43,6 +44,7 @@ export default [
       resolve(),
       commonjs(),
       babel({
+        babelHelpers: "bundled",
         exclude: ["node_modules/**"]
       }),
       !production && serve({ openPage: "/", contentBase: ["example"] }),

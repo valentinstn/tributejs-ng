@@ -28,16 +28,11 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 24
-          cache: yarn
-
-      - name: Enable Yarn
-        run: corepack enable
+          node-version: 26
+          cache: npm
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
-        env:
-          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
+        run: npm ci
 
       - name: Locate Chrome
         shell: bash
@@ -47,10 +42,10 @@ jobs:
           echo "CHROME_BIN=$chrome_bin" >> "$GITHUB_ENV"
 
       - name: Build distribution bundles
-        run: yarn build
+        run: npm run build
 
       - name: Verify generated bundles are committed
         run: git diff --exit-code -- dist example/tribute.js example/tribute.css
 
       - name: Run tests
-        run: yarn test-single-run
+        run: npm run test-single-run

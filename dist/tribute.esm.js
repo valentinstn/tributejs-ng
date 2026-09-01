@@ -45,7 +45,7 @@ if (!Array.prototype.find) {
 }
 
 if (typeof window !== 'undefined' && typeof window.CustomEvent !== "function") {
-  function CustomEvent$1(event, params) {
+  function CustomEvent(event, params) {
     params = params || {
       bubbles: false,
       cancelable: false,
@@ -57,10 +57,10 @@ if (typeof window !== 'undefined' && typeof window.CustomEvent !== "function") {
   }
 
  if (typeof window.Event !== 'undefined') {
-   CustomEvent$1.prototype = window.Event.prototype;
+   CustomEvent.prototype = window.Event.prototype;
  }
 
-  window.CustomEvent = CustomEvent$1;
+  window.CustomEvent = CustomEvent;
 }
 
 class TributeEvents {
@@ -1134,8 +1134,8 @@ class TributeSearch {
 
     match(pattern, string, opts) {
         opts = opts || {};
-        let len = string.length,
-            pre = opts.pre || '',
+        string.length;
+            let pre = opts.pre || '',
             post = opts.post || '',
             compareString = opts.caseSensitive && string || string.toLowerCase();
 
@@ -1822,4 +1822,4 @@ class Tribute {
  * Native ES6 JavaScript @mention Plugin
  **/
 
-export default Tribute;
+export { Tribute as default };

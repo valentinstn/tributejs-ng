@@ -127,7 +127,7 @@ describe("Tribute @mentions cases", function() {
         detachTribute(tribute, input.id);
       });
 
-      it("should add itemClass to list items when set it config", () => {
+      it(`should add itemClass to list items when set it config. For : ${elementType} / ${trigger}`, () => {
         let input = createDomElement(elementType);
 
         let collectionObject = {
@@ -707,7 +707,7 @@ describe("Multi-char tests", function() {
     detachTribute(tribute, input.id);
   });
 
-  describe("Tribute events", function() {
+  describe("Tribute events when active", function() {
     afterEach(function() {
       clearDom();
     });
@@ -742,7 +742,7 @@ describe("Multi-char tests", function() {
     });
   });
 
-  describe("Tribute events", function() {
+  describe("Tribute events when inactive", function() {
     afterEach(function() {
       clearDom();
     });
