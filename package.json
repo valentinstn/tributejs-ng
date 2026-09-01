@@ -1,7 +1,7 @@
 {
   "name": "tributejs-ng",
-  "version": "5.2.0",
-  "description": "Maintained cross-browser @mention and autocomplete engine",
+  "version": "5.2.3",
+  "description": "Cross-browser @mention and autocomplete engine",
   "main": "dist/tribute.js",
   "module": "dist/tribute.esm.js",
   "browser": "dist/tribute.min.js",

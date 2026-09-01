@@ -27,14 +27,13 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org/
           package-manager-cache: false
 
       - name: Enable Yarn
         run: corepack enable
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile --ignore-engines
         env:
           PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
 
